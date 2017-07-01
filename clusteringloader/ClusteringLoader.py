@@ -686,28 +686,62 @@ class ClusteringLoader:
 
         """
 
+        self.log.info('-- START -- :clusteringloader:generate_insert_files')
+        self.log.info('Author: ' + str(self.author) + '.')
+        self.log.info('Label: ' + str(self.label) + '.')
+        self.log.info('Date: ' + str(self.date) + '.')
+        self.log.info('Database: ' + str(self.database) + '.')
+        self.log.info('Source: ' + str(self.source_data) + '.')
 
+        self.log.info('Checking if clustering label already exists.')
+
+        # Check if clustering method name already exists.
         if not self.clustering_method_exists(self.label):
+
+            self.log.info('Clustering label: ' + str(self.label) + " doesn't exists. Creating into relational database.") 
+
             self.add_clustering_method(
                 name=self.label,
                 software=self.software,
                 date=self.date,
                 author=self.author)
 
+        else:
+            self.log.info('Clustering label: ' + str(self.label) + ' already exists. Using it.') 
+
+
+        # Pick the clustering method id (from relational database) to be used in this whole results loading.
         clustering_method_id = self.clustering_method_id_from_name(self.label)
+
+        self.log.info('Checking files consistency.')
 
         self.check_files_consistency()
 
+        self.log.info('Done Checking files consistency.')
+
         file_name_destination = self.insert_files_directory + '/' + 'clustersInsert.psql'
 
+        self.log.info('Insert file will be stored at: ' + str(file_name_destination))
+
         if os.path.exists(file_name_destination):
+
+            self.log.info('Insert file: ' + str(file_name_destination) + ' already exists. Removing it to create a new one.')
+
             os.remove(file_name_destination)
+
+
+        self.log.info('Will process: ' + str(len(self.valid_files)) + ' files.')
+        self.log.info('Will ignore: ' + str(len(self.invalid_files)) + ' files.')
+        self.log.info('Ignored files: ' + str(self.invalid_files))
 
         ecs_and_its_clusters = self.ecs_and_its_clusters()
 
         with open(file_name_destination, 'a') as file_destination:
 
             for ec, clusters in ecs_and_its_clusters.iteritems():
+
+                self.log.info('Processing EC number: ' + str(ec) + '.')
+                self.log.info('EC number: ' + str(ec) + ' has: ' + str(len(clusters)) + ' clusters.')
 
                 ec_id = self.ec_number_id(str(ec))
 
@@ -716,6 +750,8 @@ class ClusteringLoader:
                     # file results.
                     file_to_read = self.source_data + '/EC_' + \
                         str(ec) + '.fasta_' + str(cluster)
+
+                    self.log.info('Processing file: ' + str(file_to_read)) 
 
                     with open(file_to_read) as f:
 
@@ -740,6 +776,12 @@ class ClusteringLoader:
                                 self.write_insert_file(file_destination, data)
 
                                 data = []
+
+                    self.log.info('Done Processing file: ' + str(file_to_read))
+
+                self.log.info('Done Processing EC number: ' + str(ec) + '.')
+
+        self.log.info('-- DONE -- :clusteringloader:generate_insert_files')
 
     def write_insert_file(self, file_handle=None, data=None):
         """
@@ -766,6 +808,8 @@ class ClusteringLoader:
 
         """
 
+        self.log.info('-- START -- :clusteringloader:check_psql_can_execute_command')
+
         # Database user name from the configuration file.
         username = self.user
 
@@ -783,7 +827,12 @@ class ClusteringLoader:
         if result == 0:
             return True
         else:
+
+            self.log.info('-- ERROR -- :clusteringloader:check_psql_can_execute_command: Cannot execute psql command.')
+
             return False
+
+        self.log.info('-- DONE -- :clusteringloader:check_psql_can_execute_command')
 
     def load_file(self):
         """
@@ -792,6 +841,8 @@ class ClusteringLoader:
         This methos insert into the relational database all the result data.
 
         """
+
+        self.log.info('-- START -- :clusteringloader:load_file')
 
         if not self.check_psql_can_execute_command():
             print("ERROR:")
@@ -803,10 +854,15 @@ class ClusteringLoader:
             print("localhost:5432:kegg2017:darkmatter")
             print(
                 "BUT it's only a suggestion. Call your database administrator to know what it is.")
+
+            self.log.info('-- ERROR -- :clusteringloader:load_file')
+
             sys.exit()
 
         username = self.user
         source_file_name = self.insert_files_directory + '/' + 'clustersInsert.psql'
+
+        self.log.info('Will load the file: ' + str(source_file_name))
 
         if not os.path.exists(source_file_name):
             print(source_file_name + ' file not found.')
@@ -829,6 +885,10 @@ class ClusteringLoader:
         # needed).
         columns = ','.join(columns)
 
+        self.log.info('Columns to be filled: ' + str(columns))
+
+        self.log.info('Will execute psql command: ' + str(columns))
+        
         # Actual execute the command that inserts the data into relational
         # database.
         process = subprocess.Popen(
@@ -843,9 +903,13 @@ class ClusteringLoader:
             "\';\"",
             shell=True)
 
+        self.log.info('Done Will execute psql command: ' + str(columns))
+
         # Things got crazy here. Some table delays a lot to be inserted and the process keep going overwhelming the next process.
         # So we wait to make sure the tables order insertions are correct.
         process.wait()
         # ------------------------------------------------------------------------ #
         # ---------------- END OF THE POPULATING PROCESS ------------------------- #
         # ------------------------------------------------------------------------ #
+
+        self.log.info('-- DONE -- :clusteringloader:load_file')
