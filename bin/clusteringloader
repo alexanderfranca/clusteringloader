@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+
+parseargs = argparse.ArgumentParser(description="Load clustering results from Fasta files into the AnEnDB relational database.")
+parseargs.add_argument('--database', help="Database name.", required=True)
+parseargs.add_argument('--password', help="Database password.", required=True)
+parseargs.add_argument('--host', help="Database host.", required=True)
+parseargs.add_argument('--user', help="Database username.", required=True)
+parseargs.add_argument('--source-data', help="Full path of the directory where's the Fasta RESULT files.", required=True)
+parseargs.add_argument('--metadata-file', help="Full path of the file where's the clustering metadata file.", required=True)
+parseargs.add_argument('--insert-files-directory', help="Where to store the database insert instructions file.", required=True)
+args = parseargs.parse_args()
+
+from clusteringloader import *
+
+clustering_results = ClusteringLoader(
+                                        database=args.database,
+                                        password=args.password,
+                                        host=args.host,
+                                        user=args.user,
+                                        source_data=args.source_data,
+                                        metadata_file=args.metadata_file,
+                                        insert_files_directory=args.insert_files_directory,
+                                    )
+
+
+clustering_results.generate_insert_file()
+clustering_results.load_file()
+
