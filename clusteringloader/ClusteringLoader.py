@@ -25,10 +25,6 @@ class ClusteringLoader:
 
     def __init__(
             self,
-            label=None,
-            date=None,
-            author=None,
-            software=None,
             source_data=None,
             metadata_file=None,
             insert_files_directory=None,
@@ -39,10 +35,14 @@ class ClusteringLoader:
             log_file=None):
 
         # Metadata about the clustering results
-        self.label = label
-        self.date = date
-        self.author = author
-        self.software = software
+        # Theese values will be overridden by the metadata file loading.
+        self.label = None
+        self.date = None 
+        self.author = None 
+        self.software = None 
+        self.source_data = None 
+
+        # Where are the clustering results
         self.source_data = source_data
 
         # Logging
@@ -71,6 +71,13 @@ class ClusteringLoader:
         self.host = host 
         self.database = database 
 
+        # This project expect to load millions of records into the relational database.
+        # No way to run it without making sure everything can be tracked by a log file.
+        self.create_log_system(self.log_file)
+
+        if metadata_file:
+            self.generate_metadata_from_file(metadata_file)
+
         # -------------------------------------------------------------------------------- #
         # Database session. We need one.                                                   #
         # -------------------------------------------------------------------------------- #
@@ -87,8 +94,6 @@ class ClusteringLoader:
             host=self.host,
             database=self.database)
 
-        if metadata_file:
-            self.generate_metadata_from_file(metadata_file)
 
     def create_log_system(self, log_file=None):
         """
@@ -251,7 +256,6 @@ class ClusteringLoader:
         self.label = result_metadata['label']
         self.date = result_metadata['date']
         self.software = result_metadata['software']
-        self.source_data = result_metadata['clusters']
 
     def total_valid_files(self):
         """
@@ -682,7 +686,6 @@ class ClusteringLoader:
 
         """
 
-        self.create_log_system(self.log_file)
 
         if not self.clustering_method_exists(self.label):
             self.add_clustering_method(
