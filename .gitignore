@@ -1,0 +1,13 @@
+install.sh
+*~
+ClusteringLoader.egg-info
+dist
+*.sh
+result*
+teste*
+*.pyc
+tests
+docs
+*.tar
+*.tar.bz2
+*.gz

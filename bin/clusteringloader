@@ -12,6 +12,7 @@ parseargs.add_argument('--user', help="Database username.", required=True)
 parseargs.add_argument('--source-data', help="Full path of the directory where's the Fasta RESULT files.", required=True)
 parseargs.add_argument('--metadata-file', help="Full path of the file where's the clustering metadata file.", required=True)
 parseargs.add_argument('--insert-files-directory', help="Where to store the database insert instructions file.", required=True)
+parseargs.add_argument('--log-file', help="Full path for the log file.", required=True)
 args = parseargs.parse_args()
 
 from clusteringloader import *
@@ -24,6 +25,7 @@ clustering_results = ClusteringLoader(
                                         source_data=args.source_data,
                                         metadata_file=args.metadata_file,
                                         insert_files_directory=args.insert_files_directory,
+                                        log_file=args.log_file
                                     )
 
 

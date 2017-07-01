@@ -1,10 +1,13 @@
 import os
+import sys
 import pprint
 import datetime
 import re
 import glob
 import subprocess
 from sqlalchemy.sql import func
+import logging
+import logging.handlers
 from Ec import *
 from ClusteringMethod import *
 from Cluster import *
@@ -32,7 +35,8 @@ class ClusteringLoader:
             database=None,
             password=None,
             host=None,
-            user=None):
+            user=None,
+            log_file=None):
 
         # Metadata about the clustering results
         self.label = label
@@ -40,6 +44,9 @@ class ClusteringLoader:
         self.author = author
         self.software = software
         self.source_data = source_data
+
+        # Logging
+        self.log_file = log_file
 
         # Destination for the database insert instructions file.
         self.insert_files_directory = insert_files_directory 
@@ -82,6 +89,28 @@ class ClusteringLoader:
 
         if metadata_file:
             self.generate_metadata_from_file(metadata_file)
+
+    def create_log_system(self, log_file=None):
+        """
+        Set all logger parameters (file log path, for example), output format and set the class p
+
+        Log the process is extremely important because we don't know how long it will take.
+
+        """
+
+        log = logging.getLogger('')
+        log.setLevel(logging.DEBUG)
+        format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setFormatter(format)
+        log.addHandler(ch)
+
+        fh = logging.handlers.RotatingFileHandler( log_file , maxBytes=0, backupCount=0)
+        fh.setFormatter(format)
+        log.addHandler(fh)
+
+        self.log = log 
 
     def result_files(self):
         """
@@ -652,6 +681,8 @@ class ClusteringLoader:
         Generate the clusters insert files to be loaded into the relational database.
 
         """
+
+        self.create_log_system(self.log_file)
 
         if not self.clustering_method_exists(self.label):
             self.add_clustering_method(
