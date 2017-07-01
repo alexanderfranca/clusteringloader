@@ -83,19 +83,6 @@ class ClusteringLoader:
         if metadata_file:
             self.generate_metadata_from_file(metadata_file)
 
-    def connection_parameters(self):
-        """
-        Returns data parameters used in the database connection.
-
-        Returns:
-            (dict): Data from connected database.
-        """
-
-        return {
-            'database': self.database,
-            'username': self.user,
-            'host': self.host}
-
     def result_files(self):
         """
         Get the list of cluster result files.
